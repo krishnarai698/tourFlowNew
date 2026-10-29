@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TourFlow — Smart Tourism Management System</title>
+    <meta name="description" content="TourFlow intelligently manages tourist overcrowding at popular hill stations by recommending less-crowded alternative destinations, while supporting local communities and sustainability.">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <!-- Navbar -->
+    <div th:replace="~{fragments/header :: navbar}"></div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content fade-in">
+            <h1>
+                Don't Go Where<br>
+                <span class="gradient-text">Everyone Goes</span>
+            </h1>
+            <p class="subtitle">
+                Smart tourism that reduces overcrowding, protects destinations, and discovers hidden gems.
+                Real-time crowd monitoring • AI recommendations • Sustainable travel.
+            </p>
+
+            <!-- Search Bar -->
+            <form id="searchForm" action="/search" method="get" class="search-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" name="q" class="search-bar"
+                       placeholder="Search destinations — Manali, Shimla, Jibhi..." autocomplete="off">
+                <div id="searchSuggestions" class="search-suggestions"></div>
+            </form>
+
+            <div class="flex items-center justify-between" style="gap: 12px; justify-content: center; flex-wrap: wrap;">
+                <a href="/recommend" class="btn btn-primary btn-lg">🤖 Get AI Recommendations</a>
+                <a href="/explore" class="btn btn-secondary btn-lg">🌄 Explore Hidden Gems</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Live Crowd Ticker -->
+    <div class="container">
+        <div class="ticker-container fade-in">
+            <div class="ticker-track">
+                <th:block th:each="dest : ${destinations}">
+                    <span class="ticker-item">
+                        <span class="status-dot" th:classappend="${dest.crowdColor}"></span>
+                        <strong th:text="${dest.name}">Dest</strong>
+                        <span th:text="'👥 ' + ${dest.currentCrowdPercentage} + '%'">90%</span>
+                        <span th:text="'🚗 ' + ${dest.currentTrafficPercentage} + '%'">85%</span>
+                        &nbsp;|&nbsp;
+                    </span>
+                </th:block>
+                <!-- Duplicate for seamless scroll -->
+                <th:block th:each="dest : ${destinations}">
+                    <span class="ticker-item">
+                        <span class="status-dot" th:classappend="${dest.crowdColor}"></span>
+                        <strong th:text="${dest.name}">Dest</strong>
+                        <span th:text="'👥 ' + ${dest.currentCrowdPercentage} + '%'">90%</span>
+                        <span th:text="'🚗 ' + ${dest.currentTrafficPercentage} + '%'">85%</span>
+                        &nbsp;|&nbsp;
+                    </span>
+                </th:block>
+            </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="stats-row">
+            <div class="stat-box fade-in fade-in-delay-1">
+                <div class="stat-number" th:attr="data-count=${totalDestinations}" data-suffix="">0</div>
+                <div class="stat-label">Destinations Monitored</div>
+            </div>
+            <div class="stat-box fade-in fade-in-delay-2">
+                <div class="stat-number" th:attr="data-count=${crowdedDestinations}" data-suffix="">0</div>
+                <div class="stat-label">⚠️ Currently Overcrowded</div>
+            </div>
+            <div class="stat-box fade-in fade-in-delay-3">
+                <div class="stat-number" th:attr="data-count=${hiddenGemCount}" data-suffix="">0</div>
+                <div class="stat-label">💎 Hidden Gems Available</div>
+            </div>
+            <div class="stat-box fade-in fade-in-delay-4">
+                <div class="stat-number" th:attr="data-count=${alertCount}" data-suffix="">0</div>
+                <div class="stat-label">🚨 Active Alerts</div>
+            </div>
+        </div>
+
+        <!-- Active Alerts Section -->
+        <div th:if="${not #lists.isEmpty(activeAlerts)}" class="mb-4">
+            <div class="section-header">
+                <h2>🚨 Active Alerts</h2>
+                <div class="section-divider"></div>
+            </div>
+            <div class="alert-feed">
+                <th:block th:each="alert : ${activeAlerts}" th:if="${#lists.size(activeAlerts) <= 4}">
+                    <div class="alert-banner" th:classappend="${alert.severity.name() == 'CRITICAL'} ? '' : 'warning'">
+                        <span class="alert-icon" th:text="${alert.type.emoji}">🚨</span>
+                        <div class="alert-text">
+                            <div class="alert-title" th:text="${alert.destinationName + ' — ' + alert.type.label}">Alert</div>
+                            <div class="alert-desc" th:text="${alert.description}">Description</div>
+                        </div>
+                        <span class="badge" th:classappend="'badge-' + ${alert.severity.color}" th:text="${alert.severity.label}">HIGH</span>
+                    </div>
+                </th:block>
+            </div>
+        </div>
+
+        <!-- Top Destinations (Crowded) -->
+        <div class="mb-4">
+            <div class="section-header">
+                <h2>📊 Live Tourism Status</h2>
+                <p class="section-desc">Real-time crowd and traffic monitoring across destinations</p>
+                <div class="section-divider"></div>
+            </div>
+
+            <div class="grid-4" data-live-update="true">
+                <th:block th:each="dest,iter : ${destinations}" th:if="${iter.index < 8}">
+                    <a th:href="@{'/destination/' + ${dest.id}}" class="dest-card fade-in" th:classappend="'fade-in-delay-' + ${(iter.index % 4) + 1}">
+                        <div class="card-image">
+                            <span style="font-size: 3rem;">🏔️</span>
+                            <div class="card-overlay">
+                                <span class="badge" th:classappend="'badge-' + ${dest.crowdColor}" th:text="${dest.crowdLevel}">High</span>
+                                <span th:if="${dest.hiddenGem}" class="badge badge-purple">💎 Gem</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-title" th:text="${dest.name}">Manali</div>
+                            <div class="card-subtitle" th:text="${dest.district + ', ' + dest.state}">Kullu, HP</div>
+                            <div class="card-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">👥 Crowd</span>
+                                    <span class="stat-value num-highlight" th:classappend="${dest.crowdColor}" th:attr="data-dest-crowd=${dest.id}" th:text="${dest.currentCrowdPercentage + '%'}">92%</span>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar" th:classappend="${dest.crowdColor}" th:style="'width: ' + ${dest.currentCrowdPercentage} + '%'" th:attr="data-crowd-bar=${dest.id}"></div>
+                                    </div>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">🚗 Traffic</span>
+                                    <span class="stat-value num-highlight" th:classappend="${dest.trafficColor}" th:attr="data-dest-traffic=${dest.id}" th:text="${dest.currentTrafficPercentage + '%'}">88%</span>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar" th:classappend="${dest.trafficColor}" th:style="'width: ' + ${dest.currentTrafficPercentage} + '%'"></div>
+                                    </div>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">🏨 Hotels</span>
+                                    <span class="stat-value" th:text="${dest.hotelAvailabilityPercentage + '%'}">18%</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">⚠️ Pressure</span>
+                                    <span class="stat-value num-highlight" th:classappend="${dest.pressureColor}" th:attr="data-dest-pressure=${dest.id}" th:text="${dest.tourismPressure + '/100'}">91</span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </th:block>
+            </div>
+        </div>
+
+        <!-- Hidden Gems Section -->
+        <div class="mb-4">
+            <div class="section-header">
+                <h2>🌱 Explore Beyond Popular Places</h2>
+                <p class="section-desc">Discover hidden destinations with lower crowds and authentic experiences</p>
+                <div class="section-divider"></div>
+            </div>
+
+            <div class="grid-3">
+                <th:block th:each="gem,iter : ${hiddenGems}">
+                    <a th:href="@{'/destination/' + ${gem.id}}" class="dest-card fade-in" th:classappend="'fade-in-delay-' + ${(iter.index % 3) + 1}">
+                        <div class="card-image" style="background: linear-gradient(135deg, rgba(0,230,118,0.2), rgba(179,136,255,0.2));">
+                            <span style="font-size: 3rem;">🌿</span>
+                            <div class="card-overlay">
+                                <span class="discovery-badge">⭐ <span th:text="${gem.discoveryScore + '/100'}">91</span></span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-title" th:text="${gem.name}">Jibhi</div>
+                            <div class="card-subtitle" th:text="${gem.district + ', ' + gem.state}">Kullu, HP</div>
+                            <div class="card-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">👥 Crowd</span>
+                                    <span class="stat-value green" th:text="${gem.currentCrowdPercentage + '%'}">24%</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">🚗 Traffic</span>
+                                    <span class="stat-value green" th:text="${gem.currentTrafficPercentage + '%'}">18%</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">🌡️ Temp</span>
+                                    <span class="stat-value" th:text="${gem.temperature + '°C'}">17°C</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">🌱 Pressure</span>
+                                    <span class="stat-value green" th:text="${gem.tourismPressure + '/100'}">25</span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </th:block>
+            </div>
+
+            <div class="text-center mt-3">
+                <a href="/explore" class="btn btn-secondary btn-lg">🌄 View All Hidden Gems →</a>
+            </div>
+        </div>
+
+        <!-- How It Works -->
+        <div class="mb-4">
+            <div class="section-header text-center">
+                <h2>How TourFlow Works</h2>
+                <p class="section-desc">Intelligent tourism distribution for a sustainable India</p>
+                <div class="section-divider" style="margin: 12px auto 0;"></div>
+            </div>
+
+            <div class="grid-3 mt-3">
+                <div class="glass-card-static text-center fade-in fade-in-delay-1">
+                    <div style="font-size: 3rem; margin-bottom: 16px;">📡</div>
+                    <h3 style="margin-bottom: 8px;">Real-Time Monitoring</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Live crowd, traffic, and weather data from APIs and IoT sensors across tourist destinations.</p>
+                </div>
+                <div class="glass-card-static text-center fade-in fade-in-delay-2">
+                    <div style="font-size: 3rem; margin-bottom: 16px;">🤖</div>
+                    <h3 style="margin-bottom: 8px;">AI-Powered Recommendations</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Smart engine matches your preferences with less-crowded alternatives and explains why.</p>
+                </div>
+                <div class="glass-card-static text-center fade-in fade-in-delay-3">
+                    <div style="font-size: 3rem; margin-bottom: 16px;">🌱</div>
+                    <h3 style="margin-bottom: 8px;">Sustainable Tourism</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Distribute footfall intelligently. Protect environments. Empower local communities.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Portal — TourFlow</title>
+    <meta name="description" content="Report local issues, view active alerts, and help protect your community from tourism overflow.">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/header :: navbar}"></div>
+
+    <div class="page-content">
+        <div class="container">
+
+            <div class="section-header">
+                <h1>🧑‍🤝‍🧑 Community Portal</h1>
+                <p class="section-desc">Report local issues, view alerts, and help manage tourism in your area. Your voice matters.</p>
+                <div class="section-divider"></div>
+            </div>
+
+            <!-- Success Message -->
+            <div th:if="${param.success}" class="alert-banner success mb-3">
+                <span class="alert-icon">✅</span>
+                <div class="alert-text">
+                    <div class="alert-title">Report Submitted Successfully</div>
+                    <div class="alert-desc">Your report has been received and will be reviewed by local authorities. Thank you for helping your community!</div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <!-- Report Form -->
+                <div>
+                    <div class="report-form mb-3">
+                        <h3>📝 Report a Local Issue</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 20px;">
+                            Help us understand ground conditions. Your report will alert tourists and redirect them to reduce pressure.
+                        </p>
+
+                        <form th:action="@{/community/report}" method="post">
+                            <div class="form-group">
+                                <label>📍 Destination</label>
+                                <select name="destinationId" class="form-control" id="destSelector" onchange="updateDestName()">
+                                    <option value="">Select destination...</option>
+                                    <th:block th:each="dest : ${destinations}">
+                                        <option th:value="${dest.id}" th:text="${dest.name}" th:attr="data-name=${dest.name}">Manali</option>
+                                    </th:block>
+                                </select>
+                                <input type="hidden" name="destinationName" id="destNameField">
+                            </div>
+
+                            <div class="form-group">
+                                <label>🏷️ Issue Type</label>
+                                <select name="type" class="form-control">
+                                    <th:block th:each="type : ${alertTypes}">
+                                        <option th:value="${type}" th:text="${type.emoji + ' ' + type.label}">Type</option>
+                                    </th:block>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>⚠️ Severity</label>
+                                <select name="severity" class="form-control">
+                                    <th:block th:each="sev : ${severityLevels}">
+                                        <option th:value="${sev}" th:text="${sev.label}">Severity</option>
+                                    </th:block>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>📝 Description</label>
+                                <textarea name="description" class="form-control" placeholder="Describe the issue in detail..." rows="4" required></textarea>
+                            </div>
+
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label>👤 Your Name (optional)</label>
+                                    <input type="text" name="reportedBy" class="form-control" placeholder="Name or 'Anonymous'">
+                                </div>
+                                <div class="form-group">
+                                    <label>📞 Contact (optional)</label>
+                                    <input type="text" name="contactInfo" class="form-control" placeholder="Phone or email">
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-lg w-full" style="justify-content: center;">📢 Submit Report</button>
+                        </form>
+                    </div>
+
+                    <!-- How It Works -->
+                    <div class="glass-card-static">
+                        <h3 style="margin-bottom: 16px;">How Community Reports Work</h3>
+                        <div class="flex gap-2 mb-2" style="align-items: flex-start;">
+                            <span style="font-size: 1.5rem;">1️⃣</span>
+                            <div>
+                                <div style="font-weight: 700;">Report Issue</div>
+                                <div style="color: var(--text-secondary); font-size: 0.85rem;">Local residents report problems like water shortage, road blocks, or overcrowding.</div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 mb-2" style="align-items: flex-start;">
+                            <span style="font-size: 1.5rem;">2️⃣</span>
+                            <div>
+                                <div style="font-weight: 700;">Verify</div>
+                                <div style="color: var(--text-secondary); font-size: 0.85rem;">Local authorities review and verify the report for accuracy.</div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 mb-2" style="align-items: flex-start;">
+                            <span style="font-size: 1.5rem;">3️⃣</span>
+                            <div>
+                                <div style="font-weight: 700;">Alert Tourists</div>
+                                <div style="color: var(--text-secondary); font-size: 0.85rem;">TourFlow automatically alerts incoming tourists about the issue.</div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2" style="align-items: flex-start;">
+                            <span style="font-size: 1.5rem;">4️⃣</span>
+                            <div>
+                                <div style="font-weight: 700;">Redirect & Resolve</div>
+                                <div style="color: var(--text-secondary); font-size: 0.85rem;">Tourists are redirected to alternatives, reducing pressure while the issue is resolved.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Reports Feed -->
+                <div>
+                    <div class="glass-card-static">
+                        <h3 style="margin-bottom: 16px;">📡 Active Reports (<span th:text="${#lists.size(activeAlerts)}">6</span>)</h3>
+
+                        <div th:if="${#lists.isEmpty(activeAlerts)}" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            <span style="font-size: 3rem;">✅</span>
+                            <p style="margin-top: 12px;">No active issues reported. All clear!</p>
+                        </div>
+
+                        <div class="alert-feed">
+                            <th:block th:each="alert : ${activeAlerts}">
+                                <div class="alert-item">
+                                    <span class="alert-type-icon" th:text="${alert.type.emoji}">🚧</span>
+                                    <div class="alert-content">
+                                        <div class="flex items-center gap-1">
+                                            <span class="alert-dest" th:text="${alert.destinationName}">Manali</span>
+                                            <span class="badge" th:classappend="'badge-' + ${alert.severity.color}" th:text="${alert.severity.label}">HIGH</span>
+                                        </div>
+                                        <div class="alert-msg mt-1" th:text="${alert.type.label + ': ' + alert.description}">Description</div>
+                                        <div class="alert-meta">
+                                            <span th:text="'Reported by: ' + ${alert.reportedBy != null ? alert.reportedBy : 'Anonymous'}">Reporter</span>
+                                            <span th:if="${alert.verified}" style="margin-left: 8px; color: var(--accent-green);">✅ Verified</span>
+                                            <span th:unless="${alert.verified}" style="margin-left: 8px; color: var(--accent-amber);">⏳ Pending verification</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </th:block>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script th:src="@{/js/main.js}"></script>
+    <script>
+        function updateDestName() {
+            const sel = document.getElementById('destSelector');
+            const nameField = document.getElementById('destNameField');
+            const option = sel.options[sel.selectedIndex];
+            nameField.value = option.getAttribute('data-name') || '';
+        }
+    </script>
+</body>
+</html>

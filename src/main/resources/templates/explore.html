@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore Hidden Destinations — TourFlow</title>
+    <meta name="description" content="Discover lesser-known, sustainable tourist destinations across India. Explore hidden gems with low crowds and high discovery scores.">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/header :: navbar}"></div>
+
+    <div class="page-content">
+        <div class="container">
+            <div class="section-header">
+                <h1>🌱 Explore Beyond Popular Places</h1>
+                <p class="section-desc">Discover hidden destinations with authentic experiences, low crowds, and high sustainability. Don't go where everyone goes.</p>
+                <div class="section-divider"></div>
+            </div>
+
+            <!-- Hidden Gems Grid -->
+            <div class="grid-3 mb-4">
+                <th:block th:each="gem,iter : ${hiddenGems}">
+                    <a th:href="@{'/destination/' + ${gem.id}}" class="dest-card fade-in" th:classappend="'fade-in-delay-' + ${(iter.index % 3) + 1}">
+                        <div class="card-image" style="background: linear-gradient(135deg, rgba(0,230,118,0.2), rgba(179,136,255,0.2));">
+                            <span style="font-size: 3rem;">🌿</span>
+                            <div class="card-overlay">
+                                <span class="discovery-badge">⭐ <span th:text="${gem.discoveryScore}">91</span>/100</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-title" th:text="${gem.name}">Jibhi</div>
+                            <div class="card-subtitle" th:text="${gem.district + ', ' + gem.state + ' · ' + gem.altitude + 'm'}">Kullu, HP</div>
+                            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" th:text="${gem.description}">Description</p>
+                            <div class="card-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">👥 Crowd</span>
+                                    <span class="stat-value green" th:text="${gem.currentCrowdPercentage + '%'}">24%</span>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar green" th:style="'width:' + ${gem.currentCrowdPercentage} + '%'"></div>
+                                    </div>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">🚗 Traffic</span>
+                                    <span class="stat-value green" th:text="${gem.currentTrafficPercentage + '%'}">18%</span>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar green" th:style="'width:' + ${gem.currentTrafficPercentage} + '%'"></div>
+                                    </div>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">🏨 Hotels</span>
+                                    <span class="stat-value" th:text="${gem.hotelAvailabilityPercentage + '%'}">78%</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">🌱 Pressure</span>
+                                    <span class="stat-value green" th:text="${gem.tourismPressure + '/100'}">25</span>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-1 mt-2">
+                                <span th:if="${gem.adventureFriendly}" class="badge badge-blue">🏔️ Adventure</span>
+                                <span th:if="${gem.natureFriendly}" class="badge badge-green">🌿 Nature</span>
+                                <span th:if="${gem.peacefulFriendly}" class="badge badge-purple">🧘 Peaceful</span>
+                                <span th:if="${gem.budgetFriendly}" class="badge badge-yellow">💰 Budget</span>
+                                <span th:if="${gem.trekkingFriendly}" class="badge badge-orange">🥾 Trekking</span>
+                            </div>
+                        </div>
+                    </a>
+                </th:block>
+            </div>
+
+            <!-- All Destinations -->
+            <div class="section-header">
+                <h2>📊 All Destinations</h2>
+                <p class="section-desc">Complete list with live status</p>
+                <div class="section-divider"></div>
+            </div>
+
+            <div class="glass-card-static">
+                <table class="alt-table">
+                    <thead>
+                        <tr>
+                            <th>Destination</th>
+                            <th>Type</th>
+                            <th>Crowd</th>
+                            <th>Traffic</th>
+                            <th>Pressure</th>
+                            <th>Discovery</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="dest : ${allDestinations}">
+                            <td>
+                                <a th:href="@{'/destination/' + ${dest.id}}" style="font-weight: 700;" th:text="${dest.name}">Name</a>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);" th:text="${dest.state}">State</div>
+                            </td>
+                            <td><span class="badge badge-blue" th:text="${dest.type}">hill_station</span></td>
+                            <td>
+                                <span class="status-dot" th:classappend="${dest.crowdColor}"></span>
+                                <span th:text="${dest.currentCrowdPercentage + '%'}">92%</span>
+                            </td>
+                            <td>
+                                <span class="status-dot" th:classappend="${dest.trafficColor}"></span>
+                                <span th:text="${dest.currentTrafficPercentage + '%'}">88%</span>
+                            </td>
+                            <td><span th:classappend="${dest.pressureColor}" style="font-weight: 700;" th:text="${dest.tourismPressure + '/100'}">91</span></td>
+                            <td>
+                                <span th:if="${dest.hiddenGem}" class="discovery-badge">⭐ <span th:text="${dest.discoveryScore}">91</span></span>
+                                <span th:unless="${dest.hiddenGem}" style="color: var(--text-muted);" th:text="${dest.discoveryScore}">15</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>

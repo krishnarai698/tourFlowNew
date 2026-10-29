@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <nav th:fragment="navbar" class="navbar">
+        <div class="navbar-inner">
+            <a href="/" class="navbar-brand">
+                <div class="logo-icon">🗺️</div>
+                <div class="brand-text"><span>Tour</span>Flow</div>
+            </a>
+
+            <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
+
+            <ul class="nav-links">
+                <li><a href="/" id="nav-home">🏠 Home</a></li>
+                <li><a href="/explore" id="nav-explore">🌄 Explore</a></li>
+                <li><a href="/recommend" id="nav-recommend">🤖 AI Recommend</a></li>
+                <li><a href="/community" id="nav-community">🧑‍🤝‍🧑 Community</a></li>
+                <li><a href="/admin" id="nav-admin">📊 Dashboard</a></li>
+                <li>
+                    <div class="live-indicator">
+                        <span class="live-dot"></span>
+                        LIVE
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</head>
+</html>

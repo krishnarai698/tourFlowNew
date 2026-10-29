@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Recommendation Engine — TourFlow</title>
+    <meta name="description" content="Get personalized destination recommendations based on your travel preferences, crowd avoidance, and sustainability goals.">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/header :: navbar}"></div>
+
+    <div class="page-content">
+        <div class="container">
+            <div class="section-header text-center">
+                <h1>🤖 AI Recommendation Engine</h1>
+                <p class="section-desc">Tell us what you love, and we'll find the perfect destination — with crowd avoidance built in.</p>
+                <div class="section-divider" style="margin: 12px auto 0;"></div>
+            </div>
+
+            <!-- Preference Form -->
+            <form th:action="@{/recommend}" method="post" class="glass-card-static mb-4" style="max-width: 900px; margin: 0 auto 40px;">
+                <h3 style="margin-bottom: 20px;">What type of trip do you want?</h3>
+
+                <div class="pref-grid">
+                    <div class="pref-card">
+                        <input type="checkbox" id="adventure" name="tripTypes" value="adventure" onchange="togglePreference(this)">
+                        <label for="adventure">
+                            <span class="pref-icon">🏔️</span>
+                            <span class="pref-label">Adventure</span>
+                        </label>
+                    </div>
+                    <div class="pref-card">
+                        <input type="checkbox" id="nature" name="tripTypes" value="nature" onchange="togglePreference(this)">
+                        <label for="nature">
+                            <span class="pref-icon">🌿</span>
+                            <span class="pref-label">Nature</span>
+                        </label>
+                    </div>
+                    <div class="pref-card">
+                        <input type="checkbox" id="family" name="tripTypes" value="family" onchange="togglePreference(this)">
+                        <label for="family">
+                            <span class="pref-icon">👨‍👩‍👧‍👦</span>
+                            <span class="pref-label">Family</span>
+                        </label>
+                    </div>
+                    <div class="pref-card">
+                        <input type="checkbox" id="peaceful" name="tripTypes" value="peaceful" onchange="togglePreference(this)">
+                        <label for="peaceful">
+                            <span class="pref-icon">🧘</span>
+                            <span class="pref-label">Peaceful</span>
+                        </label>
+                    </div>
+                    <div class="pref-card">
+                        <input type="checkbox" id="budget" name="tripTypes" value="budget" onchange="togglePreference(this)">
+                        <label for="budget">
+                            <span class="pref-icon">💰</span>
+                            <span class="pref-label">Budget</span>
+                        </label>
+                    </div>
+                    <div class="pref-card">
+                        <input type="checkbox" id="photography" name="tripTypes" value="photography" onchange="togglePreference(this)">
+                        <label for="photography">
+                            <span class="pref-icon">📸</span>
+                            <span class="pref-label">Photography</span>
+                        </label>
+                    </div>
+                    <div class="pref-card">
+                        <input type="checkbox" id="snow" name="tripTypes" value="snow" onchange="togglePreference(this)">
+                        <label for="snow">
+                            <span class="pref-icon">❄️</span>
+                            <span class="pref-label">Snow</span>
+                        </label>
+                    </div>
+                    <div class="pref-card">
+                        <input type="checkbox" id="trekking" name="tripTypes" value="trekking" onchange="togglePreference(this)">
+                        <label for="trekking">
+                            <span class="pref-icon">🥾</span>
+                            <span class="pref-label">Trekking</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="grid-3 mb-3">
+                    <div class="form-group">
+                        <label for="avoidCrowds">Avoid Crowds?</label>
+                        <select id="avoidCrowds" name="avoidCrowds" class="form-control">
+                            <option value="true" selected>Yes — prioritize low crowd</option>
+                            <option value="false">No — show all options</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="ecoFriendly">Eco-Friendly?</label>
+                        <select id="ecoFriendly" name="ecoFriendly" class="form-control">
+                            <option value="true">Yes — prioritize sustainability</option>
+                            <option value="false" selected>No preference</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="tripDays">Trip Duration</label>
+                        <select id="tripDays" name="tripDays" class="form-control">
+                            <option value="1">1 Day</option>
+                            <option value="2">2 Days</option>
+                            <option value="3" selected>3 Days</option>
+                            <option value="4">4 Days</option>
+                            <option value="5">5 Days</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary btn-lg">🤖 Get AI Recommendations</button>
+                </div>
+            </form>
+
+            <!-- Results -->
+            <div th:if="${hasResults}" class="mb-4">
+                <div class="section-header">
+                    <h2>✨ Your Personalized Recommendations</h2>
+                    <p class="section-desc">Ranked by preference match, crowd levels, and sustainability</p>
+                    <div class="section-divider"></div>
+                </div>
+
+                <div style="max-width: 900px; margin: 0 auto;">
+                    <th:block th:each="rec,iter : ${recommendations}" th:if="${iter.index < 10}">
+                        <div class="rec-card fade-in" th:classappend="'fade-in-delay-' + ${(iter.index % 4) + 1}">
+                            <div class="rec-rank">
+                                <span th:if="${iter.index == 0}">🥇</span>
+                                <span th:if="${iter.index == 1}">🥈</span>
+                                <span th:if="${iter.index == 2}">🥉</span>
+                                <span th:if="${iter.index > 2}" th:text="${'#' + (iter.index + 1)}">#4</span>
+                            </div>
+                            <div class="rec-body">
+                                <div class="rec-header">
+                                    <a th:href="@{'/destination/' + ${rec.get('destination').id}}" class="rec-name" th:text="${rec.get('destination').name}">Jibhi</a>
+                                    <span class="rec-score" th:text="${rec.get('matchScore') + '% match'}">94%</span>
+                                </div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;" th:text="${rec.get('destination').district + ', ' + rec.get('destination').state + ' · ' + rec.get('destination').altitude + 'm'}">Kullu, HP</div>
+                                <div class="rec-tags">
+                                    <th:block th:each="highlight : ${rec.get('highlights')}">
+                                        <span class="badge badge-blue" th:text="${highlight}">Tag</span>
+                                    </th:block>
+                                    <span class="badge" th:classappend="'badge-' + ${rec.get('destination').crowdColor}" th:text="'👥 ' + ${rec.get('destination').currentCrowdPercentage} + '%'">24%</span>
+                                    <span class="badge" th:classappend="'badge-' + ${rec.get('destination').pressureColor}" th:text="'⚠️ ' + ${rec.get('destination').tourismPressure} + '/100'">25</span>
+                                </div>
+                                <p class="rec-explanation" th:text="${rec.get('explanation')}">Explanation</p>
+                                <div class="flex gap-1 mt-2">
+                                    <a th:href="@{'/destination/' + ${rec.get('destination').id}}" class="btn btn-sm btn-secondary">View Details</a>
+                                    <a th:href="@{'/itinerary/' + ${rec.get('destination').id}}" class="btn btn-sm btn-primary">📋 Itinerary</a>
+                                </div>
+                            </div>
+                        </div>
+                    </th:block>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>

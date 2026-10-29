@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${itinerary.get('destination') + ' Itinerary — TourFlow'}">Itinerary — TourFlow</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/header :: navbar}"></div>
+
+    <div class="page-content">
+        <div class="container" style="max-width: 800px;">
+
+            <div class="section-header">
+                <h1 th:text="'📋 ' + ${itinerary.get('destination')} + ' Itinerary'">Itinerary</h1>
+                <p class="section-desc" th:text="${itinerary.get('days') + '-day optimized plan · AI-generated to avoid peak crowds'}">3-day plan</p>
+                <div class="section-divider"></div>
+            </div>
+
+            <!-- Day Plans -->
+            <th:block th:each="day : ${itinerary.get('dayPlans')}">
+                <div class="itinerary-day glass-card-static mb-3 fade-in">
+                    <div class="day-header" th:text="${day.get('title')}">Day 1</div>
+
+                    <th:block th:each="activity : ${day.get('activities')}">
+                        <div class="activity-item">
+                            <span class="activity-icon" th:text="${activity.get('icon')}">🌅</span>
+                            <div class="activity-time" th:text="${activity.get('time')}">6:00 AM</div>
+                            <div class="activity-content">
+                                <div style="font-weight: 600;" th:text="${activity.get('activity')}">Activity</div>
+                                <div class="activity-tip" th:text="'💡 ' + ${activity.get('tip')}">Tip</div>
+                            </div>
+                        </div>
+                    </th:block>
+                </div>
+            </th:block>
+
+            <!-- Travel Tips -->
+            <div class="glass-card-static mb-3 fade-in">
+                <h3 style="margin-bottom: 16px;">💡 Travel Tips</h3>
+                <th:block th:each="tip : ${itinerary.get('tips')}">
+                    <div style="padding: 8px 0; border-bottom: 1px solid var(--border-glass); font-size: 0.9rem; color: var(--text-secondary);" th:text="${tip}">Tip</div>
+                </th:block>
+            </div>
+
+            <div class="text-center">
+                <a href="javascript:history.back()" class="btn btn-secondary">← Back to Destination</a>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>

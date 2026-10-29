@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results — TourFlow</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/header :: navbar}"></div>
+
+    <div class="page-content">
+        <div class="container">
+            <div class="section-header">
+                <h1>🔍 Search Results</h1>
+                <p class="section-desc">
+                    <span th:text="${resultCount}">5</span> destinations found for
+                    "<span th:text="${query}">manali</span>"
+                </p>
+                <div class="section-divider"></div>
+            </div>
+
+            <!-- Search bar -->
+            <form action="/search" method="get" class="search-container mb-4" style="max-width: 600px;">
+                <span class="search-icon">🔍</span>
+                <input type="text" name="q" class="search-bar" th:value="${query}" placeholder="Search destinations...">
+            </form>
+
+            <div th:if="${#lists.isEmpty(results)}" class="glass-card-static text-center" style="padding: 60px;">
+                <span style="font-size: 4rem;">🏔️</span>
+                <h3 class="mt-2">No destinations found</h3>
+                <p style="color: var(--text-secondary);">Try a different search term or <a href="/explore">explore hidden gems</a>.</p>
+            </div>
+
+            <div class="grid-3">
+                <th:block th:each="dest,iter : ${results}">
+                    <a th:href="@{'/destination/' + ${dest.id}}" class="dest-card fade-in" th:classappend="'fade-in-delay-' + ${(iter.index % 3) + 1}">
+                        <div class="card-image">
+                            <span style="font-size: 3rem;">🏔️</span>
+                            <div class="card-overlay">
+                                <span class="badge" th:classappend="'badge-' + ${dest.crowdColor}" th:text="${dest.crowdLevel}">High</span>
+                                <span th:if="${dest.hiddenGem}" class="badge badge-purple">💎 Gem</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-title" th:text="${dest.name}">Manali</div>
+                            <div class="card-subtitle" th:text="${dest.district + ', ' + dest.state}">Kullu, HP</div>
+                            <div class="card-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">👥 Crowd</span>
+                                    <span class="stat-value num-highlight" th:classappend="${dest.crowdColor}" th:text="${dest.currentCrowdPercentage + '%'}">92%</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">🚗 Traffic</span>
+                                    <span class="stat-value" th:classappend="${dest.trafficColor}" th:text="${dest.currentTrafficPercentage + '%'}">88%</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">⚠️ Pressure</span>
+                                    <span class="stat-value" th:classappend="${dest.pressureColor}" th:text="${dest.tourismPressure + '/100'}">91</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">🌡️ Temp</span>
+                                    <span class="stat-value" th:text="${dest.temperature + '°C'}">18°C</span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </th:block>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>

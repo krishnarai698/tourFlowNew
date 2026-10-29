@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Government Tourism Dashboard — TourFlow</title>
+    <meta name="description" content="Real-time tourism pressure monitoring, alert management, and crowd diversion controls for government administrators.">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div th:replace="~{fragments/header :: navbar}"></div>
+
+    <div class="page-content">
+        <div class="container">
+
+            <div class="dashboard-header">
+                <div>
+                    <h1>📊 Tourism Dashboard</h1>
+                    <p style="color: var(--text-secondary);">Government & Admin — Real-time monitoring and controls</p>
+                </div>
+                <div class="flex gap-1 items-center">
+                    <div class="live-indicator" style="font-size: 0.9rem;">
+                        <span class="live-dot"></span> System Active
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overview Stats -->
+            <div class="stats-row mb-4" style="grid-template-columns: repeat(5, 1fr);">
+                <div class="stat-box">
+                    <div class="stat-number" th:text="${overview.get('totalDestinations')}">16</div>
+                    <div class="stat-label">Total Destinations</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" style="background: linear-gradient(135deg, var(--accent-red), var(--accent-orange)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;" th:text="${overview.get('criticalCount')}">2</div>
+                    <div class="stat-label">🔴 Critical</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" style="background: linear-gradient(135deg, var(--accent-orange), var(--accent-amber)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;" th:text="${overview.get('highCount')}">3</div>
+                    <div class="stat-label">🟠 High Pressure</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" style="background: linear-gradient(135deg, var(--accent-amber), var(--accent-green)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;" th:text="${overview.get('moderateCount')}">4</div>
+                    <div class="stat-label">🟡 Moderate</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" style="background: linear-gradient(135deg, var(--accent-green), var(--accent-teal)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;" th:text="${overview.get('lowCount')}">7</div>
+                    <div class="stat-label">🟢 Low Pressure</div>
+                </div>
+            </div>
+
+            <div class="grid-2 mb-4">
+                <!-- Tourism Pressure Chart -->
+                <div class="glass-card-static">
+                    <h3 style="margin-bottom: 16px;">📊 Tourism Pressure by Destination</h3>
+                    <div style="height: 350px;">
+                        <canvas id="pressureChart"
+                            th:attr="data-labels=${#strings.listJoin(overview.get('destinations').![name], ',')},data-values=${#strings.listJoin(overview.get('destinations').![tourismPressure], ',')}">
+                        </canvas>
+                    </div>
+                </div>
+
+                <!-- Distribution Chart -->
+                <div class="glass-card-static">
+                    <h3 style="margin-bottom: 16px;">📈 Status Distribution</h3>
+                    <div style="height: 350px;">
+                        <canvas id="distributionChart"
+                            data-labels="Critical,High,Moderate,Low"
+                            th:attr="data-values=${overview.get('criticalCount') + ',' + overview.get('highCount') + ',' + overview.get('moderateCount') + ',' + overview.get('lowCount')}">
+                        </canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Destination Pressure Grid -->
+            <div class="section-header">
+                <h2>🗺️ Destination Status</h2>
+                <div class="section-divider"></div>
+            </div>
+
+            <div class="pressure-grid mb-4">
+                <th:block th:each="dest : ${overview.get('destinations')}">
+                    <div class="pressure-card" th:classappend="${dest.tourismPressure >= 90 ? 'critical' : dest.tourismPressure >= 75 ? 'high' : dest.tourismPressure >= 50 ? 'moderate' : 'low'}">
+                        <div class="pc-name" th:text="${dest.name}">Manali</div>
+                        <div class="pc-value" th:text="${dest.tourismPressure + '%'}">91%</div>
+                        <div class="progress-bar-container mb-1">
+                            <div class="progress-bar" th:classappend="${dest.pressureColor}" th:style="'width:' + ${dest.tourismPressure} + '%'"></div>
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">
+                            <span th:text="'👥 ' + ${dest.currentCrowdPercentage} + '%'">92%</span>
+                            <span th:text="' · 🚗 ' + ${dest.currentTrafficPercentage} + '%'">88%</span>
+                        </div>
+                        <div class="flex gap-1 mt-2">
+                            <form th:action="@{'/admin/limit/' + ${dest.id}}" method="post" style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-danger">🚫 Limit</button>
+                            </form>
+                            <a th:href="@{'/destination/' + ${dest.id}}" class="btn btn-sm btn-secondary">View</a>
+                        </div>
+                    </div>
+                </th:block>
+            </div>
+
+            <div class="grid-2 mb-4">
+                <!-- Crowd Diversion Simulator -->
+                <div class="glass-card-static">
+                    <h3 style="margin-bottom: 16px;">🔄 Crowd Diversion Simulator</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 16px;">Simulate how tourists could be redistributed from overcrowded destinations.</p>
+                    <form th:action="@{/admin/diversion}" method="post">
+                        <div class="form-group">
+                            <label>Overcrowded Destination</label>
+                            <select name="destinationId" class="form-control">
+                                <th:block th:each="dest : ${overview.get('destinations')}">
+                                    <option th:value="${dest.id}" th:text="${dest.name + ' (' + dest.tourismPressure + '%)'}">Manali</option>
+                                </th:block>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Expected Tourists</label>
+                            <input type="number" name="expectedTourists" value="10000" min="1000" max="50000" class="form-control">
+                        </div>
+                        <button type="submit" class="btn btn-primary">🔄 Simulate Diversion</button>
+                    </form>
+
+                    <!-- Diversion Results -->
+                    <div th:if="${diversion != null}" class="mt-3">
+                        <h4 style="margin-bottom: 12px;">Distribution Result</h4>
+                        <div class="badge badge-green mb-2" th:text="'Efficiency: ' + ${diversion.get('diversionEfficiency')} + '%'">95%</div>
+                        <th:block th:each="item : ${diversion.get('distribution')}">
+                            <div class="flex items-center justify-between mb-1" style="padding: 8px 0; border-bottom: 1px solid var(--border-glass);">
+                                <span style="font-weight: 600;" th:text="${item.get('destination')}">Manali</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="badge" th:classappend="'badge-' + ${item.get('color')}" th:text="${item.get('allocated') + ' tourists'}">4000</span>
+                                    <span style="font-size: 0.8rem; color: var(--text-muted);" th:text="${item.get('percentage') + '%'}">40%</span>
+                                </div>
+                            </div>
+                        </th:block>
+                    </div>
+                </div>
+
+                <!-- Alerts Management -->
+                <div class="glass-card-static">
+                    <h3 style="margin-bottom: 16px;">🚨 Active Alerts (<span th:text="${#lists.size(activeAlerts)}">6</span>)</h3>
+
+                    <!-- Issue System Alert -->
+                    <form th:action="@{/admin/alert}" method="post" class="mb-3" style="padding: 16px; background: rgba(255,255,255,0.02); border-radius: var(--radius-sm); border: 1px solid var(--border-glass);">
+                        <div class="form-group" style="margin-bottom: 8px;">
+                            <select name="destinationId" class="form-control" style="padding: 8px 12px;">
+                                <th:block th:each="dest : ${overview.get('destinations')}">
+                                    <option th:value="${dest.id}" th:text="${dest.name}">Manali</option>
+                                </th:block>
+                            </select>
+                        </div>
+                        <div class="flex gap-1">
+                            <input type="text" name="message" placeholder="Alert message..." class="form-control" style="padding: 8px 12px;">
+                            <button type="submit" class="btn btn-sm btn-danger">📢 Issue</button>
+                        </div>
+                    </form>
+
+                    <div class="alert-feed" style="max-height: 400px; overflow-y: auto;">
+                        <th:block th:each="alert : ${activeAlerts}">
+                            <div class="alert-item">
+                                <span class="alert-type-icon" th:text="${alert.type.emoji}">🚨</span>
+                                <div class="alert-content">
+                                    <div class="alert-dest" th:text="${alert.destinationName}">Manali</div>
+                                    <div class="alert-msg" th:text="${alert.description}">Description</div>
+                                    <div class="alert-meta">
+                                        <span class="badge" th:classappend="'badge-' + ${alert.severity.color}" th:text="${alert.severity.label}">HIGH</span>
+                                        <span th:if="${alert.verified}" style="color: var(--accent-green); margin-left: 6px;">✅ Verified</span>
+                                        <span th:unless="${alert.verified}" style="color: var(--accent-amber); margin-left: 6px;">⏳ Unverified</span>
+                                    </div>
+                                </div>
+                                <div class="alert-actions" style="flex-direction: column;">
+                                    <form th:unless="${alert.verified}" th:action="@{'/admin/verify/' + ${alert.id}}" method="post">
+                                        <button type="submit" class="btn btn-sm btn-success">✅</button>
+                                    </form>
+                                    <form th:action="@{'/admin/resolve/' + ${alert.id}}" method="post">
+                                        <button type="submit" class="btn btn-sm btn-secondary">✖️</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </th:block>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script th:src="@{/js/main.js}"></script>
+    <script th:src="@{/js/charts.js}"></script>
+</body>
+</html>

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${destination.name + ' — TourFlow Live Status'}">Destination — TourFlow</title>
+    <meta name="description" th:content="${'Live crowd, traffic, weather status and smart alternatives for ' + destination.name}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div th:replace="~{fragments/header :: navbar}"></div>
+
+    <div class="page-content">
+        <div class="container">
+
+            <!-- Alert Banner -->
+            <div th:if="${destination.alertActive}" class="alert-banner">
+                <span class="alert-icon">🚨</span>
+                <div class="alert-text">
+                    <div class="alert-title">Active Alert</div>
+                    <div class="alert-desc" th:text="${destination.alertMessage}">Alert message</div>
+                </div>
+            </div>
+
+            <!-- Destination Header -->
+            <div class="flex items-center justify-between mb-3" style="flex-wrap: wrap; gap: 16px;">
+                <div>
+                    <h1 style="font-size: 2.5rem; margin-bottom: 4px;" th:text="${destination.name}">Manali</h1>
+                    <p style="color: var(--text-secondary);" th:text="${destination.district + ', ' + destination.state + ' · ' + destination.altitude + 'm · ' + destination.type}">Kullu, HP</p>
+                </div>
+                <div class="flex gap-2">
+                    <span class="badge" th:classappend="'badge-' + ${destination.crowdColor}" th:text="${destination.crowdLevel}">High</span>
+                    <span th:if="${destination.hiddenGem}" class="discovery-badge">⭐ Discovery <span th:text="${destination.discoveryScore}">91</span>/100</span>
+                </div>
+            </div>
+
+            <!-- Live Status Dashboard -->
+            <div class="status-grid">
+                <div class="status-card">
+                    <div class="status-emoji">👥</div>
+                    <div class="status-label">Crowd</div>
+                    <div class="status-value" th:classappend="${destination.crowdColor}" th:text="${destination.currentCrowdPercentage + '%'}">92%</div>
+                    <div class="progress-bar-container mt-1">
+                        <div class="progress-bar" th:classappend="${destination.crowdColor}" th:style="'width:' + ${destination.currentCrowdPercentage} + '%'"></div>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <div class="status-emoji">🚗</div>
+                    <div class="status-label">Traffic</div>
+                    <div class="status-value" th:classappend="${destination.trafficColor}" th:text="${destination.currentTrafficPercentage + '%'}">88%</div>
+                    <div class="progress-bar-container mt-1">
+                        <div class="progress-bar" th:classappend="${destination.trafficColor}" th:style="'width:' + ${destination.currentTrafficPercentage} + '%'"></div>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <div class="status-emoji">🅿️</div>
+                    <div class="status-label">Parking</div>
+                    <div class="status-value" th:text="${destination.currentParkingPercentage + '%'}">64%</div>
+                </div>
+                <div class="status-card">
+                    <div class="status-emoji">🏨</div>
+                    <div class="status-label">Hotels Available</div>
+                    <div class="status-value" th:text="${destination.hotelAvailabilityPercentage + '%'}">18%</div>
+                </div>
+                <div class="status-card">
+                    <div class="status-emoji">🌡️</div>
+                    <div class="status-label">Weather</div>
+                    <div class="status-value" style="font-size: 1.3rem;" th:text="${weather.get('temp') != null ? weather.get('temp') + '°C' : destination.temperature + '°C'}">18°C</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);" th:text="${weather.get('description') != null ? weather.get('description') : destination.weatherCondition}">Cloudy</div>
+                </div>
+                <div class="status-card">
+                    <div class="status-emoji">⚠️</div>
+                    <div class="status-label">Tourism Pressure</div>
+                    <div class="status-value" th:classappend="${destination.pressureColor}" th:text="${destination.tourismPressure + '/100'}">91</div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <!-- Left Column -->
+                <div>
+                    <!-- Description -->
+                    <div class="glass-card-static mb-3">
+                        <h3 style="margin-bottom: 12px;">About</h3>
+                        <p style="color: var(--text-secondary); line-height: 1.7;" th:text="${destination.description}">Description</p>
+                    </div>
+
+                    <!-- Crowd Prediction Chart -->
+                    <div class="glass-card-static mb-3">
+                        <h3 style="margin-bottom: 16px;">📈 Crowd Prediction (48 Hours)</h3>
+                        <div style="height: 250px;">
+                            <canvas id="trendChart"
+                                th:attr="data-labels=${#strings.listJoin(crowdForecast.![get('label')], ',')},data-values=${#strings.listJoin(crowdForecast.![get('predictedCrowd')], ',')}">
+                            </canvas>
+                        </div>
+                    </div>
+
+                    <!-- Best Time to Travel -->
+                    <div class="glass-card-static mb-3">
+                        <h3 style="margin-bottom: 16px;">🕐 Best Time to Travel</h3>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span style="font-size: 2rem;">🚗</span>
+                            <div>
+                                <div style="font-weight: 700; font-size: 1.2rem; color: var(--accent-green);" th:text="${bestTime.get('recommendedDeparture')}">5:30 AM</div>
+                                <div style="font-size: 0.85rem; color: var(--text-muted);">Recommended departure</div>
+                            </div>
+                        </div>
+                        <div class="badge badge-green mb-2" th:text="'Expected traffic reduction: ' + ${bestTime.get('expectedReduction')} + '%'">34%</div>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem;" th:text="${bestTime.get('reason')}">Reason</p>
+                        <div class="mt-2" style="font-size: 0.8rem; color: var(--text-muted);">
+                            <div th:text="'⏰ Peak hours: ' + ${bestTime.get('peakHours')}">Peak</div>
+                            <div th:text="'🚫 Avoid: ' + ${bestTime.get('avoidHours')}">Avoid</div>
+                        </div>
+                    </div>
+
+                    <!-- Alerts for this destination -->
+                    <div th:if="${not #lists.isEmpty(alerts)}" class="glass-card-static mb-3">
+                        <h3 style="margin-bottom: 16px;">🚨 Local Alerts</h3>
+                        <div class="alert-feed">
+                            <th:block th:each="alert : ${alerts}">
+                                <div class="alert-item">
+                                    <span class="alert-type-icon" th:text="${alert.type.emoji}">🚧</span>
+                                    <div class="alert-content">
+                                        <div class="alert-dest" th:text="${alert.type.label}">Road Blockage</div>
+                                        <div class="alert-msg" th:text="${alert.description}">Description</div>
+                                        <div class="alert-meta">
+                                            <span class="badge" th:classappend="'badge-' + ${alert.severity.color}" th:text="${alert.severity.label}">HIGH</span>
+                                            <span th:if="${alert.verified}" style="margin-left: 8px; color: var(--accent-green);">✅ Verified</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </th:block>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div>
+                    <!-- Smart Alternatives -->
+                    <div class="glass-card-static mb-3" th:if="${destination.currentCrowdPercentage >= 50}">
+                        <h3 style="margin-bottom: 4px;">🗺️ Smart Alternatives</h3>
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;" th:text="'⚠️ ' + ${destination.name} + ' is currently ' + ${destination.crowdLevel.toLowerCase()} + ' crowded. Consider these alternatives:'">Overcrowded</p>
+
+                        <th:block th:each="alt,iter : ${alternatives}">
+                            <div class="rec-card" style="margin-bottom: 12px;">
+                                <div class="rec-rank" th:text="${'#' + (iter.index + 1)}">1</div>
+                                <div class="rec-body">
+                                    <div class="rec-header">
+                                        <a th:href="@{'/destination/' + ${alt.get('destination').id}}" class="rec-name" th:text="${alt.get('destination').name}">Jibhi</a>
+                                        <span class="rec-score" th:text="${alt.get('matchScore') + '%'}">92%</span>
+                                    </div>
+                                    <div class="rec-tags">
+                                        <span class="badge badge-green" th:text="'👥 ' + ${alt.get('destination').currentCrowdPercentage} + '%'">24%</span>
+                                        <span class="badge badge-green" th:text="'🚗 ' + ${alt.get('destination').currentTrafficPercentage} + '%'">18%</span>
+                                        <span class="badge badge-blue" th:text="'📍 ' + ${alt.get('distance')} + ' km'">95km</span>
+                                    </div>
+                                    <p class="rec-explanation" th:text="${alt.get('explanation')}">Explanation</p>
+                                </div>
+                            </div>
+                        </th:block>
+                    </div>
+
+                    <!-- Sustainability Score -->
+                    <div class="sustainability-card mb-3">
+                        <h3 style="margin-bottom: 16px;">🌱 Sustainability Score</h3>
+                        <div class="sustainability-rating">
+                            <div class="rating-circle" th:classappend="${sustainability.get('rating').toString().startsWith('A') ? 'grade-a' : sustainability.get('rating').toString().startsWith('B') ? 'grade-b' : sustainability.get('rating').toString().startsWith('C') ? 'grade-c' : sustainability.get('rating').toString().startsWith('D') ? 'grade-d' : 'grade-f'}" th:text="${sustainability.get('rating')}">A</div>
+                            <div>
+                                <div style="font-weight: 700;" th:text="${sustainability.get('pressureLabel')}">Low</div>
+                                <div style="font-size: 0.85rem; color: var(--text-secondary);" th:text="${sustainability.get('ratingDescription')}">Desc</div>
+                            </div>
+                        </div>
+                        <div class="sustainability-metrics">
+                            <div class="sus-metric">
+                                <span class="sus-label">Environmental Load</span>
+                                <span class="sus-value">
+                                    <span class="status-dot" th:classappend="${sustainability.get('envColor')}"></span>
+                                    <span th:text="${sustainability.get('environmentalLoad')} + '/100'">88</span>
+                                </span>
+                            </div>
+                            <div class="sus-metric">
+                                <span class="sus-label">Traffic Impact</span>
+                                <span class="sus-value">
+                                    <span class="status-dot" th:classappend="${sustainability.get('trafficColor')}"></span>
+                                    <span th:text="${sustainability.get('trafficImpact')} + '/100'">91</span>
+                                </span>
+                            </div>
+                            <div class="sus-metric">
+                                <span class="sus-label">Crowd Density</span>
+                                <span class="sus-value">
+                                    <span class="status-dot" th:classappend="${sustainability.get('crowdColor')}"></span>
+                                    <span th:text="${sustainability.get('crowdDensity')} + '/100'">93</span>
+                                </span>
+                            </div>
+                            <div class="sus-metric">
+                                <span class="sus-label">Local Capacity</span>
+                                <span class="sus-value">
+                                    <span class="status-dot" th:classappend="${sustainability.get('capacityColor')}"></span>
+                                    <span th:text="${sustainability.get('localCapacity')} + '/100'">61</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Local Info -->
+                    <div class="glass-card-static mb-3">
+                        <h3 style="margin-bottom: 16px;">📍 Local Information</h3>
+                        <div class="mb-2">
+                            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">🏔️ Nearby Attractions</div>
+                            <div style="color: var(--text-secondary); font-size: 0.9rem;" th:text="${destination.nearbyAttractions}">Attractions</div>
+                        </div>
+                        <div class="mb-2">
+                            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">🍲 Local Food</div>
+                            <div style="color: var(--text-secondary); font-size: 0.9rem;" th:text="${destination.localFood}">Food</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">🚌 Transport</div>
+                            <div style="color: var(--text-secondary); font-size: 0.9rem;" th:text="${destination.transportOptions}">Transport</div>
+                        </div>
+                    </div>
+
+                    <!-- Local Businesses -->
+                    <div th:if="${not #lists.isEmpty(businesses)}" class="glass-card-static mb-3">
+                        <h3 style="margin-bottom: 16px;">🏠 Support Local</h3>
+                        <th:block th:each="biz : ${businesses}">
+                            <div class="alert-item" style="margin-bottom: 8px;">
+                                <span class="alert-type-icon" th:text="${biz.type.emoji}">🏠</span>
+                                <div class="alert-content">
+                                    <div class="alert-dest" th:text="${biz.name}">Homestay</div>
+                                    <div class="alert-msg" th:text="${biz.description}">Description</div>
+                                    <div class="alert-meta">
+                                        <span th:text="'⭐ ' + ${biz.rating}">4.8</span>
+                                        <span style="margin-left: 8px;" th:text="${biz.priceLabel}">₹ Budget</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </th:block>
+                    </div>
+
+                    <!-- Generate Itinerary -->
+                    <div class="glass-card-static text-center">
+                        <h3 style="margin-bottom: 12px;">📋 AI Itinerary</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 16px;">Get an optimized day-by-day plan for your trip</p>
+                        <a th:href="@{'/itinerary/' + ${destination.id}}" class="btn btn-primary">🤖 Generate Itinerary</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script th:src="@{/js/main.js}"></script>
+    <script th:src="@{/js/charts.js}"></script>
+</body>
+</html>
